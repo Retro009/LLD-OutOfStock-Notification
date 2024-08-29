@@ -1,24 +1,40 @@
 package com.example.ecom.controllers;
 
-import com.example.ecom.dtos.DeregisterUserForNotificationRequestDto;
-import com.example.ecom.dtos.DeregisterUserForNotificationResponseDto;
-import com.example.ecom.dtos.RegisterUserForNotificationRequestDto;
-import com.example.ecom.dtos.RegisterUserForNotificationResponseDto;
+import com.example.ecom.dtos.*;
+import com.example.ecom.exceptions.*;
 import com.example.ecom.services.NotificationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 
+@Controller
 public class NotificationController {
 
     private NotificationService notificationService;
 
+    @Autowired
     public NotificationController(NotificationService notificationService) {
         this.notificationService = notificationService;
     }
 
     public RegisterUserForNotificationResponseDto registerUser(RegisterUserForNotificationRequestDto requestDto) {
-        return null;
+        RegisterUserForNotificationResponseDto responseDto = new RegisterUserForNotificationResponseDto();
+        try {
+            responseDto.setNotification(notificationService.registerUser(requestDto.getUserId(), requestDto.getProductId()));
+            responseDto.setResponseStatus(ResponseStatus.SUCCESS);
+        } catch (UserNotFoundException | ProductNotFoundException | ProductInStockException e) {
+            responseDto.setResponseStatus(ResponseStatus.FAILURE);
+        }
+        return responseDto;
     }
 
     public DeregisterUserForNotificationResponseDto deregisterUser(DeregisterUserForNotificationRequestDto requestDto) {
-        return null;
+        DeregisterUserForNotificationResponseDto responseDto = new DeregisterUserForNotificationResponseDto();
+        try {
+            notificationService.deregisterUser(requestDto.getUserId(), requestDto.getNotificationId());
+            responseDto.setResponseStatus(ResponseStatus.SUCCESS);
+        } catch (UserNotFoundException | NotificationNotFoundException | UnAuthorizedException e) {
+            responseDto.setResponseStatus(ResponseStatus.FAILURE);
+        }
+        return responseDto;
     }
 }
