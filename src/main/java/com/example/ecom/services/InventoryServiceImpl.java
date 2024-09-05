@@ -1,5 +1,6 @@
 package com.example.ecom.services;
 
+import com.example.ecom.adapters.SendGridAdapter;
 import com.example.ecom.exceptions.ProductNotFoundException;
 import com.example.ecom.libraries.Sendgrid;
 import com.example.ecom.models.Inventory;
@@ -21,12 +22,14 @@ public class InventoryServiceImpl implements InventoryService{
     private InventoryRepository inventoryRepository;
     private ProductRepository productRepository;
     private NotificationRepository notificationRepository;
+    private SendGridAdapter sendGridAdapter;
 
     @Autowired
-    public InventoryServiceImpl(InventoryRepository inventoryRepository, ProductRepository productRepository, NotificationRepository notificationRepository) {
+    public InventoryServiceImpl(InventoryRepository inventoryRepository, ProductRepository productRepository, NotificationRepository notificationRepository, SendGridAdapter sendGridAdapter) {
         this.inventoryRepository = inventoryRepository;
         this.productRepository = productRepository;
         this.notificationRepository = notificationRepository;
+        this.sendGridAdapter = sendGridAdapter;
     }
 
     @Override
@@ -45,11 +48,10 @@ public class InventoryServiceImpl implements InventoryService{
             inventory = inventoryRepository.save(inventory);
         }
         if(inventory.getQuantity()>0){
-            Sendgrid sendgrid = new Sendgrid();
             List<Notification> notifications = notificationRepository.findByProduct(inventory.getProduct());
             for(Notification notification:notifications){
                 if(notification.getStatus() == NotificationStatus.PENDING){
-                    sendgrid.sendEmailAsync(notification.getUser().getEmail(), product.getName() + " back in stock!", "Dear " + notification.getUser().getName() + ", " + product.getName() + " is now back in stock. Grab it ASAP!");
+                    sendGridAdapter.sendEmail(notification.getUser().getEmail(), product.getName() + " back in stock!", "Dear " + notification.getUser().getName() + ", " + product.getName() + " is now back in stock. Grab it ASAP!");
                     notification.setStatus(NotificationStatus.SENT);
                     notificationRepository.save(notification);
                 }
